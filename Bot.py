@@ -23,6 +23,9 @@ class Bot:
             else:
                 self.__state.fishes[fish.fish_id] = fish
 
+        # Initialize positions
+        self.find_start_positions(self.__state)
+
     def read_state(self) -> GameState:
         state = copy.deepcopy(self.__state)
 
@@ -71,7 +74,7 @@ class Bot:
         for i in range(int(input())):
             inputs = [int(s) for s in input().split()]
 
-            fish = state.fishes[inputs[0]]
+            fish = state.get_fish(inputs[0])
 
             fish.position = Vector(inputs[1], inputs[2])
             fish.speed = Vector(inputs[3], inputs[4])
@@ -88,8 +91,8 @@ class Bot:
             drone = state.drones[int(inputs[0])]
             fish_id = int(inputs[1])
 
-            drone.radar_blips[fish_id] = BlipType(inputs[2])
-            lost_fishes.remove(fish_id)
+            drone.radar_blips[fish_id] = getattr(BlipType, inputs[2])
+            lost_fishes.discard(fish_id)
 
         # Set lost
         for fish_id in lost_fishes:
@@ -99,4 +102,7 @@ class Bot:
         return state
 
     def get_action(self, state: GameState) -> GameAction:
+        pass
+
+    def find_start_positions(self, state: GameState) -> None:
         pass

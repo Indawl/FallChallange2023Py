@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from Vector import Vector
 
 
@@ -9,7 +11,7 @@ class RectangleRange:
         self.__fr = fr
         self.__to = to
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f"({self.__fr} {self.__to})"
 
     @property
@@ -20,25 +22,25 @@ class RectangleRange:
     def to(self):
         return self.__to
 
-    def __add__(self, other: Vector):
+    def __add__(self, other: Vector) -> RectangleRange:
         return RectangleRange(self.__fr + other, self.__to + other)
 
-    def __sub__(self, other: Vector):
+    def __sub__(self, other: Vector) -> RectangleRange:
         return RectangleRange(self.__fr - other, self.__to - other)
 
-    def __eq__(self, other):
+    def __eq__(self, other: RectangleRange) -> bool:
         return self.__fr == other.__fr and self.__to == other.__to
 
-    def __ne__(self, other):
+    def __ne__(self, other: RectangleRange) -> bool:
         return not self == other
 
-    def hsymm(self, x: int | float = 0):
+    def hsymm(self, x: int | float = 0) -> RectangleRange:
         return RectangleRange(self.__to.hsymm(x), self.__fr.hsymm(x))
 
-    def in_range(self, coord: Vector):
+    def in_range(self, coord: Vector) -> bool:
         return self.__fr.x <= coord.x <= self.__to.x and self.__fr.y <= coord.y <= self.__to.y
 
-    def intersect(self, rectangle):
+    def intersect(self, rectangle: RectangleRange) -> RectangleRange:
         x = max(self.__fr.x, rectangle.__fr.x)
         y = max(self.__fr.y, rectangle.__fr.y)
         to_x = min(self.__to.x, rectangle.__to.x)
@@ -65,8 +67,8 @@ class RectangleRange:
 
         return Vector(x, y)
 
-    def intersect_radius(self, coord: Vector, r: int):
+    def intersect_radius(self, coord: Vector, r: int) -> RectangleRange:
         return self.intersect(RectangleRange(coord.offset(-r), coord.offset(r)))
 
-    def scale(self, koef: int | float):
+    def scale(self, koef: int | float) -> RectangleRange:
         return RectangleRange(self.__fr.offset(koef), self.__to.offset(koef))

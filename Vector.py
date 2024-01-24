@@ -1,3 +1,4 @@
+from __future__ import annotations
 from math import sqrt, cos, sin
 
 
@@ -9,7 +10,7 @@ class Vector:
         self.__x = x
         self.__y = y
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f"({self.__x}, {self.__y})"
 
     @property
@@ -20,36 +21,36 @@ class Vector:
     def y(self) -> int | float:
         return self.__y
 
-    def __add__(self, other):
+    def __add__(self, other: Vector) -> Vector:
         return Vector(self.__x + other.__x, self.__y + other.__y)
 
-    def __sub__(self, other):
+    def __sub__(self, other: Vector) -> Vector:
         return Vector(self.__x - other.__x, self.__y - other.__y)
 
-    def __mul__(self, other):
+    def __mul__(self, other: int | float) -> Vector:
         return Vector(self.__x * other, self.__y * other)
 
     __rmul__ = __mul__
 
-    def __neg__(self):
+    def __neg__(self) -> Vector:
         return self * -1
 
-    def __truediv__(self, other):
+    def __truediv__(self, other: int | float) -> Vector:
         return Vector(self.__x / other, self.__y / other)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Vector) -> bool:
         return self.__x == other.__x and self.__y == other.y
 
-    def __ne__(self, other):
+    def __ne__(self, other: Vector) -> bool:
         return not self == other
 
-    def offset(self, length: int | float):
+    def offset(self, length: int | float) -> Vector:
         return Vector(self.__x + length, self.__y + length)
 
-    def skew(self, other) -> int | float:
+    def skew(self, other: Vector) -> int | float:
         return self.__x * other.__y - other.__x * self.__y
 
-    def dot(self, other) -> int | float:
+    def dot(self, other: Vector) -> int | float:
         return self.__x * other.__x + other.__y * self.__y
 
     def length2(self) -> int | float:
@@ -58,37 +59,37 @@ class Vector:
     def length(self) -> float:
         return sqrt(self.length2())
 
-    def distance2(self, other) -> int | float:
+    def distance2(self, other: Vector) -> int | float:
         return (self - other).length2()
 
-    def distance(self, other) -> float:
+    def distance(self, other: Vector) -> float:
         return sqrt(self.distance2(other))
 
     def normalize(self):
         return self / self.length()
 
-    def project(self, to):
+    def project(self, to: Vector):
         return to * self.dot(to) / to.length2()
 
     def is_zero(self) -> bool:
         return self == Vector()
 
-    def hsymm(self, x: int | float = 0):
+    def hsymm(self, x: int | float = 0) -> Vector:
         return Vector(2 * x - self.__x, self.__y)
 
-    def vsymm(self, y: int | float = 0):
+    def vsymm(self, y: int | float = 0) -> Vector:
         return Vector(self.__x, 2 * y - self.__y)
 
-    def round(self):
+    def round(self) -> Vector:
         return Vector(round(self.__x), round(self.__y))
 
-    def epsilon_round(self):
+    def epsilon_round(self) -> Vector:
         return Vector(round(self.__x * 10000000.0) / 10000000.0, round(self.__y * 10000000.0) / 10000000.0)
 
-    def cross(self, d: int = 1):
+    def cross(self, d: int = 1) -> Vector:
         return Vector(-d * self.__y, d * self.__x)
 
-    def rotate(self, angle: float):
+    def rotate(self, angle: float) -> Vector:
         return Vector(self.__x * cos(angle) - self.__y * sin(angle),
                       self.__x * sin(angle) + self.__y * cos(angle))
 
@@ -98,13 +99,13 @@ class Vector:
     def in_range2(self, ri: int, ro: int) -> bool:
         return ri ** 2 < self.length2() <= ro ** 2
 
-    def in_range_vec(self, other, r: int) -> bool:
+    def in_range_vec(self, other: Vector, r: int) -> bool:
         return (other - self).in_range(r)
 
-    def in_range_vec2(self, other, ri: int, ro: int) -> bool:
+    def in_range_vec2(self, other: Vector, ri: int, ro: int) -> bool:
         return (other - self).in_range2(ri, ro)
 
-    def get_closest(self, coords: list) -> list:
+    def get_closest(self, coords: list[Vector]) -> list[Vector]:
         closest, min_dist = [], 0
 
         for coord in coords:
