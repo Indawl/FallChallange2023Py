@@ -1,6 +1,6 @@
-from numpy import ndarray
-from numpy.linalg import norm
 from enum import Enum
+
+from Vector import Vector
 
 
 class FishColor(Enum):
@@ -15,9 +15,9 @@ class Fish:
     fish_id: int
     color: FishColor
     kind: FishKind
-    position: ndarray
-    speed: ndarray
-    location: ndarray
+    position: Vector
+    speed: Vector
+    location: Vector
 
     def __init__(self, fish_id: int, color: FishColor = FishColor.UGLY, kind: FishKind = FishKind.ANGLER):
         self.fish_id = fish_id
@@ -26,4 +26,4 @@ class Fish:
 
     def __str__(self) -> str:
         return f"[{self.fish_id}] {self.color} {self.kind} {self.position} \
-            V {int(norm(self.speed, ord=2))} {self.speed} "
+            V {int(self.speed.length())} {self.speed} "

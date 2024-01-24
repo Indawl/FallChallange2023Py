@@ -1,7 +1,7 @@
 from enum import Enum
-from numpy import ndarray
-from numpy.linalg import norm
+
 import Properties
+from Vector import Vector
 
 
 class BlipType(Enum):
@@ -11,8 +11,8 @@ class BlipType(Enum):
 class Drone:
     drone_id: int
     player_id: int
-    position: ndarray
-    speed: ndarray
+    position: Vector
+    speed: Vector
     emergency: bool
     battery: int = Properties.MAX_BATTERY
     light_radius: int
@@ -28,4 +28,4 @@ class Drone:
 
     def __str__(self) -> str:
         return f"[{self.drone_id}] {'My' if self.player_id == 0 else 'Enemy'} Drone {self.position} \
-         V {int(norm(self.speed, ord=2))} B {self.battery} S {len(self.scans)}{'Broken' if self.emergency else ''}"
+         V {int(self.speed.length())} B {self.battery} S {len(self.scans)}{'Broken' if self.emergency else ''}"

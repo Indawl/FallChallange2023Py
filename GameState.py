@@ -1,11 +1,11 @@
-import Drone
-import Fish
+from Drone import Drone
+from Fish import Fish
 
 
 class GameState:
     score: tuple[int, int]
     scans: tuple[set[int], set[int]]
-    drones: tuple[dict[int, Drone], dict[int, Drone]]
+    drones: dict[int, Drone]
     fishes: dict[int, Fish]
     monsters: dict[int, Fish]
     lost_fishes: dict[int, Fish]
