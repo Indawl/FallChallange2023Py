@@ -24,6 +24,6 @@ class Fish:
         self.color = color
         self.kind = kind
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"[{self.fish_id}] {self.color} {self.kind} {self.position} \
             V {int(norm(self.speed, ord=2))} {self.speed} "

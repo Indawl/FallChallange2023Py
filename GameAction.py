@@ -12,8 +12,8 @@ class GameAction:
     def __init__(self, action_type: GameActionType):
         self.action_type = action_type
 
-    def __str__(self):
-        return self.action_type
+    def __str__(self) -> str:
+        return self.action_type.name
 
 
 class GameActionList(GameAction):
@@ -26,8 +26,8 @@ class GameActionList(GameAction):
         else:
             self.actions.append(game_action)
 
-    def __str__(self):
-        return '\n'.join(self.actions)
+    def __str__(self) -> str:
+        return '\n'.join(str(a) for a in self.actions)
 
 
 class GameActionWait(GameAction):
@@ -37,7 +37,7 @@ class GameActionWait(GameAction):
         super().__init__(GameActionType.WAIT)
         self.light = light
 
-    def __str__(self):
+    def __str__(self) -> str:
         return super().__str__() + f" {int(self.light)} {self.text}"
 
 
@@ -50,5 +50,5 @@ class GameActionMove(GameAction):
         self.position = position
         self.light = light
 
-    def __str__(self):
+    def __str__(self) -> str:
         return super().__str__() + f" {self.position} {int(self.light)} {self.text}"
