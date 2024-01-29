@@ -6,21 +6,25 @@ class GameActionType(Enum):
 
 
 class GameAction:
-    action_type: GameActionType
+    __action_type: GameActionType
     text: str
 
+    @property
+    def action_type(self) -> GameActionType:
+        return self.__action_type
+
     def __init__(self, action_type: GameActionType):
-        self.action_type = action_type
+        self.__action_type = action_type
         self.text = ""
 
     def __str__(self):
-        return self.action_type.name
+        return self.__action_type.name
 
 
 class GameActionList(GameAction):
     actions: list[GameAction]
 
-    def __init__(self, game_action: None | GameAction | list[GameAction]):
+    def __init__(self, game_action: GameAction | list[GameAction] = None):
         super().__init__(GameActionType.LIST)
         if game_action is None:
             self.actions = []

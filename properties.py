@@ -1,11 +1,13 @@
 from typing import Final
 
-from Fish import FishKind
-from Vector import Vector
+from game_math import Vector
+from game_objects import FishKind
+
+MAX_TURN: Final = 201
 
 MAP_SIZE: Final = 10000
 SURFACE: Final = 500
-CENTER: Final = Vector((MAP_SIZE - 1) / 2, (MAP_SIZE - 1) / 2)
+CENTER: Final = Vector(MAP_SIZE - 1, MAP_SIZE - 1) / 2
 
 FISH_SPEED: Final = 200
 FISH_FRIGHTENED_SPEED: Final = 400
@@ -18,6 +20,7 @@ DRONE_MAX_SPEED: Final = 600
 DRONE_SINK_SPEED: Final = 300
 DRONE_EMERGENCY_SPEED: Final = 300
 
+DELTA_RADIUS: Final = 3
 DARK_SCAN_RADIUS: Final = 800
 LIGHT_SCAN_RADIUS: Final = 2000
 MONSTER_DETECTED_RADIUS_ADD: Final = 300
