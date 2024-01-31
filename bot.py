@@ -78,7 +78,7 @@ class Bot:
 
         # Symmetric Fish
         for fish in state.fishes.values():
-            if fish.last_seen == 0:
+            if fish.last_seen == 0:  # visible
                 sfish = state.get_symmetric_fish(fish)
 
                 if sfish is not None and sfish.speed is None:
@@ -86,22 +86,22 @@ class Bot:
                     sfish.position = fish.position.hsymm(properties.CENTER.x)
 
                     # Check if we have fluence
-                    if any(not drone.emergency and
-                           drone.position.in_range(drone.light_radius if fish.kind == FishKind.ANGLER
-                                                   else properties.MOTOR_RANGE)
-                           for drone in state.drones.values()):
+                    if any(fish.position.in_range_vec(drone.position,
+                                                      drone.light_radius if fish.kind == FishKind.ANGLER
+                                                      else properties.MOTOR_RANGE)
+                           for drone in state.drones.values() if not drone.emergency):
                         sfish.speed = Vector()
                         sfish.speed = referee.get_fish_speed(sfish)
                         if sfish.speed.is_zero():
-                            sfish = None
+                            sfish.speed = None
                         else:
                             sfish.speed = fish.speed.hsymm()
 
         # From Enemy Scans
         for drone in state.drones.values():
-            if drone.player_id == 1:
+            if drone.player_id == 1:  # enemy
                 for fish in (state.fishes[fish_id] for fish_id in drone.new_scans):
-                    if fish.last_seen > 0:
+                    if fish.last_seen > 0:  # invisible
                         # Undefined fish or position not for scan
                         if fish.speed is None or not fish.position.in_range_vec(drone.position, drone.light_radius):
                             fish.location = fish.location.intersect_radius(drone.position, drone.light_radius)
@@ -109,19 +109,20 @@ class Bot:
                             fish.speed = None
 
                             # Undefined symmetric fish
-                            sfish = state.fishes.get(fish.fish_id)
+                            sfish = state.get_symmetric_fish(fish)
                             if sfish is not None and sfish.speed is None:
                                 sfish.location = fish.location.hsymm(properties.CENTER.x)
                                 sfish.position = fish.position.hsymm(properties.CENTER.x)
 
         # Correct position from radar
         for fish in state.fishes.values():
-            if fish.last_seen > 0:
+            if fish.last_seen > 0:  # invisible
                 habitat = properties.HABITAT[fish.kind]
                 loc = RectangleRange(Vector(0, habitat[0]), Vector(properties.MAP_SIZE - 1, habitat[1]))
 
+                # Radar
                 for drone in state.drones.values():
-                    if drone.player_id == 0:
+                    if drone.player_id == 0:  # my drone
                         loc = loc.intersect(drone.get_range_by_radar(fish.fish_id))
 
                 # Increase location
@@ -134,31 +135,33 @@ class Bot:
                     fish.speed = None
 
                 # If my light, but I don't see it
-                drones = [drone for drone in state.drones.values() if drone.player_id == 0 and
-                          not drone.emergency and fish.position.in_range_vec(drone.position, drone.light_radius)]
+                drones = [drone for drone in state.drones.values()
+                          if drone.player_id == 0 and not drone.emergency
+                          and fish.position.in_range_vec(drone.position, drone.light_radius)]
                 if any(drones):
                     direction = None
 
-                # If both drones did not see fish
-                if len(drones) > 1 and drones[1].position != drones[0].position:
-                    offset_position = drones[1].position - drones[0].position
-                    offset_length2 = offset_position.length2()
-                    radius2_0 = drones[0].light_radius**2 / offset_length2
-                    radius2_1 = drones[1].light_radius**2 / offset_length2
+                    # If both drones did not see fish
+                    if len(drones) > 1 and drones[1].position != drones[0].position:
+                        offset_position = drones[1].position - drones[0].position
+                        offset_length2 = offset_position.length2()
+                        radius0 = drones[0].light_radius ** 2 / offset_length2
+                        radius1 = drones[1].light_radius ** 2 / offset_length2
 
-                    project = (radius2_0 - radius2_1) / 2.0 + 0.5
-                    cross = sqrt(radius2_0 - project * project) + properties.DELTA_RADIUS
+                        project = (radius0 - radius1) / 2.0 + 0.5
+                        cross = sqrt(radius0 - project ** 2) + properties.DELTA_RADIUS
 
-                    fish.position = offset_position * project
-                    direction = offset_position.cross() * cross
-                    if not fish.location.in_range(direction + fish.position):
-                        direction = offset_position.cross(-1) * cross
-                else:
-                    fish.position = drones[0].position
-                    direction = (fish.location.center - drones[0].position).normalize() *\
-                                (drones[0].light_radius + properties.DELTA_RADIUS)
+                        fish.position = drones[0].position + offset_position * project
+                        direction = offset_position.cross() * cross
+                        if not fish.location.in_range(direction + fish.position):
+                            direction = offset_position.cross(-1) * cross
+                    else:
+                        drone = max(drones, key=lambda drone: drone.light_radius)
+                        fish.position = drone.position
+                        direction = (fish.location.center - drone.position).set_length(
+                            drone.light_radius + properties.DELTA_RADIUS)
 
-                fish.position = (fish.position + direction).round()
-                if not fish.location.in_range(fish.position):
-                    fish.position = fish.location.intersect_line(fish.position, fish.location.center)
+                    fish.position = (fish.position + direction).round()
+                    if not fish.location.in_range(fish.position):
+                        fish.position = fish.location.intersect_line(fish.position, fish.location.center)
                     fish.speed = None

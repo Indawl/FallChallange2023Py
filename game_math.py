@@ -68,6 +68,9 @@ class Vector:
     def normalize(self):
         return self / self.length()
 
+    def set_length(self, length: int | float) -> Vector:
+        return self.normalize() * length
+
     def project(self, to: Vector):
         return to * self.dot(to) / to.length2()
 
@@ -94,18 +97,43 @@ class Vector:
                       self.__x * sin(angle) + self.__y * cos(angle))
 
     def in_range(self, r: int) -> bool:
+        """
+        Coord in range radius
+        :param r: Radius
+        """
         return self.length2() <= r ** 2
 
     def in_range2(self, ri: int, ro: int) -> bool:
+        """
+        Coord is between inner and outer radius
+        :param ri: Inner radius
+        :param ro: Outer radius
+        """
         return ri ** 2 < self.length2() <= ro ** 2
 
     def in_range_vec(self, other: Vector, r: int) -> bool:
+        """
+        Coord in range circle
+        :param other: Center of circle
+        :param r: Radius of circle
+        """
         return (other - self).in_range(r)
 
     def in_range_vec2(self, other: Vector, ri: int, ro: int) -> bool:
+        """
+        Coord is between inner and outer circle
+        :param other: Center of circle
+        :param ri: Inner radius of circle
+        :param ro: Outer radius of circle
+        """
         return (other - self).in_range2(ri, ro)
 
     def get_closest(self, coords: list[Vector]) -> list[Vector]:
+        """
+        Get closest coords with equal distance
+        :param coords: List of coords
+        :return: List of closest coords
+        """
         closest, min_dist = [], 0
 
         for coord in coords:
@@ -130,11 +158,11 @@ class RectangleRange:
         return f"({self.__from} {self.__to})"
 
     @property
-    def from_(self):
+    def from_(self) -> Vector:
         return self.__from
 
     @property
-    def to(self):
+    def to(self) -> Vector:
         return self.__to
 
     @property
@@ -157,9 +185,16 @@ class RectangleRange:
         return RectangleRange(self.__to.hsymm(x), self.__from.hsymm(x))
 
     def in_range(self, coord: Vector) -> bool:
+        """
+        Point inside rectangle
+        """
         return self.__from.x <= coord.x <= self.__to.x and self.__from.y <= coord.y <= self.__to.y
 
     def intersect(self, rectangle: RectangleRange) -> RectangleRange:
+        """
+        Intersect with rectangle
+        If it doesn't have intersected, then return self
+        """
         x = max(self.__from.x, rectangle.__from.x)
         y = max(self.__from.y, rectangle.__from.y)
         to_x = min(self.__to.x, rectangle.__to.x)
@@ -170,6 +205,11 @@ class RectangleRange:
         return RectangleRange(Vector(x, y), Vector(to_x, to_y))
 
     def intersect_line(self, coord: Vector, in_rect: Vector) -> Vector:
+        """
+        Point of intersection with line segment
+        :param coord: Beginning of the segment
+        :param in_rect: The other end of the segment, which is inside the rectangle
+        """
         d = coord - in_rect
 
         if d.x == 0:
@@ -187,7 +227,16 @@ class RectangleRange:
         return Vector(x, y)
 
     def intersect_radius(self, coord: Vector, r: int) -> RectangleRange:
+        """
+        Intersect with circle
+        :param coord: Center of circle
+        :param r: Radius of circle
+        :return: Approximate intersection with circle as rectangle
+        """
         return self.intersect(RectangleRange(coord - r, coord + r))
 
     def scale(self, koef: int | float) -> RectangleRange:
+        """
+        Scale rectangle relative to center
+        """
         return RectangleRange(self.__from - koef, self.__to + koef)

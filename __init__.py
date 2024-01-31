@@ -7,6 +7,10 @@ from game_objects import GameState, Fish, FishColor, FishKind, Drone, BlipType
 
 
 def read_initialize() -> GameState:
+    """
+    Read from input initial state
+    :return: State with fish info
+    """
     state = GameState()
 
     for i in range(int(input())):
@@ -18,6 +22,11 @@ def read_initialize() -> GameState:
 
 
 def read_state(state: GameState) -> GameState:
+    """
+    Read from input game state
+    :param state: Previous state
+    :return: State for next turn
+    """
     new_state = copy.deepcopy(state)
     new_state.turn += 1
 
@@ -58,7 +67,7 @@ def read_state(state: GameState) -> GameState:
     # Drone's new scans
     if state.drones:
         for drone in new_state.drones.values():
-            drone.new_scans = drone.scans - state.drones.get(drone.drone_id).scans
+            drone.new_scans = drone.scans - state.drones[drone.drone_id].scans
 
     # Visible fishes
     for i in range(int(input())):
