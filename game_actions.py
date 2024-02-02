@@ -48,7 +48,7 @@ class GameActionList(GameAction):
 class GameActionWait(GameAction):
     light: bool
 
-    def __init__(self, light: bool):
+    def __init__(self, light: bool = False):
         """
         Wait action
         :param light: Light indicator
@@ -64,7 +64,7 @@ class GameActionMove(GameAction):
     position: tuple[int, int]
     light: bool
 
-    def __init__(self, position: tuple[int, int], light: bool):
+    def __init__(self, position: tuple[int, int], light: bool = False):
         """
         Move action
         :param position: Move to position

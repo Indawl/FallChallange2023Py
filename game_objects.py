@@ -68,11 +68,11 @@ class Drone:
     radar_blips: dict[int, BlipType]
 
     @property
-    def drone_id(self):
+    def drone_id(self) -> int:
         return self.__drone_id
 
     @property
-    def player_id(self):
+    def player_id(self) -> int:
         return self.__player_id
 
     def __init__(self, drone_id: int, player_id: int):
@@ -128,3 +128,9 @@ class GameState:
 
     def get_symmetric_fish(self, fish: Fish) -> Fish:
         return self.fishes.get(fish.fish_id + (1 if fish.fish_id % 2 == 0 else -1))
+
+    def get_fish(self, fish_id) -> Fish:
+        fish = self.fishes.get(fish_id)
+        if fish is None:
+            fish = self.lost_fishes.get(fish_id)
+        return fish

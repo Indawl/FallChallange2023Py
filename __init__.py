@@ -100,9 +100,9 @@ def read_state(state: GameState) -> GameState:
 
 
 # initialize state
-state_ = read_initialize()
+bot = Bot(read_initialize())
 
 # game loop
 while True:
-    state_ = read_state(state_)
-    print(Bot.get_action(state_))
+    bot.state = read_state(bot.state)
+    print(bot.get_action())

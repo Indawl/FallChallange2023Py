@@ -1,25 +1,30 @@
 from math import sqrt
 
 import properties
-from game_actions import GameAction
+from game_actions import GameAction, GameActionWait
 from game_math import Vector, RectangleRange
 from game_objects import GameState, Fish, FishColor, FishKind, Drone, BlipType
 from referee import Referee
 
 
 class Bot:
-    @staticmethod
-    def get_action(state: GameState) -> GameAction:
-        if state.turn == 1:  # If first turn, define start positions
-            Bot.find_start_positions(state)
+    state: GameState
+
+    def __init__(self, state: GameState):
+        self.state = state
+
+    def get_action(self) -> GameAction:
+        if self.state.turn == 1:  # If first turn, define start positions
+            self.find_start_positions()
         else:  # else correct it
-            Bot.correct_fish_positions(state)
+            self.correct_fish_positions()
 
         # Update speed for invisible fishes, because we have new drone positions
-        referee = Referee(state)
-        referee.update_speed([fish for fish in state.fishes.values() if fish.last_seen > 0])
+        referee = Referee(self.state)
+        referee.update_speed([fish for fish in self.state.fishes.values() if fish.last_seen > 0])
 
-        #
+        # Get best variant
+
 
         # Update positions
         referee.update_positions()
@@ -27,12 +32,11 @@ class Bot:
         # Return actions
         return GameAction()
 
-    @staticmethod
-    def find_start_positions(state: GameState) -> None:
-        for fish in state.fishes.values():
+    def find_start_positions(self) -> None:
+        for fish in self.state.fishes.values():
             if fish.fish_id % 2 == 0:  # without symmetric fish
                 # Get symmetric fish
-                sfish = state.fishes[fish.fish_id + 1]
+                sfish = self.state.fishes[fish.fish_id + 1]
 
                 # Get start location
                 if fish.kind == FishKind.ANGLER:
@@ -46,7 +50,7 @@ class Bot:
                 sfish.location = fish.location
 
                 # Correct location by radar
-                for drone in state.drones.values():
+                for drone in self.state.drones.values():
                     if drone.player_id == 0:
                         fish.Location = fish.location.intersect(drone.get_range_by_radar(fish.fish_id))
                         sfish.Location = sfish.location.intersect(drone.get_range_by_radar(sfish.fish_id))
@@ -72,14 +76,13 @@ class Bot:
                 fish.position = fish.location.center
                 sfish.position = sfish.location.center
 
-    @staticmethod
-    def correct_fish_positions(state: GameState) -> None:
-        referee = Referee(state)
+    def correct_fish_positions(self) -> None:
+        referee = Referee(self.state)
 
         # Symmetric Fish
-        for fish in state.fishes.values():
+        for fish in self.state.fishes.values():
             if fish.last_seen == 0:  # visible
-                sfish = state.get_symmetric_fish(fish)
+                sfish = self.state.get_symmetric_fish(fish)
 
                 if sfish is not None and sfish.speed is None:
                     sfish.location = fish.location.hsymm(properties.CENTER.x)
@@ -89,7 +92,7 @@ class Bot:
                     if any(fish.position.in_range_vec(drone.position,
                                                       drone.light_radius if fish.kind == FishKind.ANGLER
                                                       else properties.MOTOR_RANGE)
-                           for drone in state.drones.values() if not drone.emergency):
+                           for drone in self.state.drones.values() if not drone.emergency):
                         sfish.speed = Vector()
                         sfish.speed = referee.get_fish_speed(sfish)
                         if sfish.speed.is_zero():
@@ -98,9 +101,9 @@ class Bot:
                             sfish.speed = fish.speed.hsymm()
 
         # From Enemy Scans
-        for drone in state.drones.values():
+        for drone in self.state.drones.values():
             if drone.player_id == 1:  # enemy
-                for fish in (state.fishes[fish_id] for fish_id in drone.new_scans):
+                for fish in (self.state.fishes[fish_id] for fish_id in drone.new_scans):
                     if fish.last_seen > 0:  # invisible
                         # Undefined fish or position not for scan
                         if fish.speed is None or not fish.position.in_range_vec(drone.position, drone.light_radius):
@@ -109,19 +112,19 @@ class Bot:
                             fish.speed = None
 
                             # Undefined symmetric fish
-                            sfish = state.get_symmetric_fish(fish)
+                            sfish = self.state.get_symmetric_fish(fish)
                             if sfish is not None and sfish.speed is None:
                                 sfish.location = fish.location.hsymm(properties.CENTER.x)
                                 sfish.position = fish.position.hsymm(properties.CENTER.x)
 
         # Correct position from radar
-        for fish in state.fishes.values():
+        for fish in self.state.fishes.values():
             if fish.last_seen > 0:  # invisible
                 habitat = properties.HABITAT[fish.kind]
                 loc = RectangleRange(Vector(0, habitat[0]), Vector(properties.MAP_SIZE - 1, habitat[1]))
 
                 # Radar
-                for drone in state.drones.values():
+                for drone in self.state.drones.values():
                     if drone.player_id == 0:  # my drone
                         loc = loc.intersect(drone.get_range_by_radar(fish.fish_id))
 
@@ -135,7 +138,7 @@ class Bot:
                     fish.speed = None
 
                 # If my light, but I don't see it
-                drones = [drone for drone in state.drones.values()
+                drones = [drone for drone in self.state.drones.values()
                           if drone.player_id == 0 and not drone.emergency
                           and fish.position.in_range_vec(drone.position, drone.light_radius)]
                 if any(drones):

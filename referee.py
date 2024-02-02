@@ -1,4 +1,7 @@
+import copy
+
 import properties
+from decisions import Decision
 from game_math import Vector
 from game_objects import GameState, Fish, FishKind
 
@@ -130,3 +133,136 @@ class Referee:
             speed = speed.epsilon_round().round()
 
         return speed
+
+    def remove_to_lost(self) -> None:
+        """
+        Remove fish if it goes beyond the map
+        """
+        fishes = [fish for fish in self.state.fishes.values() if fish.kind != FishKind.ANGLER]
+        for fish in fishes:
+            new_position = fish.position + fish.speed
+            if new_position.x < 0 or new_position.x > properties.MAP_SIZE - 1:
+                self.state.lost_fishes[fish.fish_id] = self.state.fishes.pop(fish.fish_id)
+
+    def do_scan(self) -> None:
+        """
+        Scan fish with drones within the lighting radius
+        """
+        for drone in (drone for drone in self.state.drones.values() if not drone.emergency):
+            fishes = (fish for fish in self.state.fishes.values() if fish.fish_id not in drone.scans
+                      and fish.fish_id not in self.state.scans[drone.player_id]
+                      and fish.position.in_range_vec(drone.position, drone.light_radius))
+            for fish in fishes:
+                drone.scans.add(fish.fish_id)
+
+    def do_report(self, end: bool = False) -> None:
+        """
+        Save fish on a surface
+        :param end: Save fish anywhere
+        """
+        scans = set(), set()
+
+        # get union scans
+        for drone in self.state.drones.values():
+            if drone.position.y <= properties.SURFACE or end:
+                scans[drone.player_id] |= drone.scans
+                drone.scans.clear()
+        # remove already scanned fish
+        scans[0] -= self.state.scans[0]
+        scans[1] -= self.state.scans[1]
+
+        # determinate first scan (not in enemy drone scans and saved scans)
+        scans_bonus = (scans[0] - scans[1] - self.state.scans[1],
+                       scans[1] - scans[0] - self.state.scans[0])
+        scans[0] -= scans_bonus[0]
+        scans[1] -= scans_bonus[1]
+
+        # apply scans
+        self.apply_scans(0, scans[0])
+        self.apply_scans(1, scans[1])
+        self.apply_scans(0, scans_bonus[0], True)
+        self.apply_scans(1, scans_bonus[1], True)
+
+    def apply_scans(self, player_id: int, scans: set[int], bonus: bool = False):
+        """
+        Apply scans to state scans and increase score
+        :param player_id: Apply for player
+        :param scans: Set of fish id
+        :param bonus: It is first scan with bonus
+        """
+        fishes = map(self.state.get_fish, scans)
+
+        for fish in fishes:
+            self.state.scans[player_id].add(fish.fish_id)
+            self.state.score[player_id] += properties.REWARDS[fish.kind]
+            if bonus:
+                self.state.score[player_id] += properties.REWARDS[fish.kind]
+
+        colors = set(fish.color for fish in fishes)
+        kinds = set(fish.kind for fish in fishes)
+        fishes = map(self.state.get_fish, self.state.scans[player_id])
+
+        for color in colors:
+            if len([fish for fish in fishes if fish.color == color]) == 4:
+                self.state.score[player_id] += properties.REWARDS_COLOR
+                if bonus:
+                    self.state.score[player_id] += properties.REWARDS_COLOR
+
+        for kind in kinds:
+            if len([fish for fish in fishes if fish.kind == kind]) == 3:
+                self.state.score[player_id] += properties.REWARDS_KIND
+                if bonus:
+                    self.state.score[player_id] += properties.REWARDS_KIND
+
+    def is_game_over(self) -> bool:
+        """
+        Check if the game is over
+        """
+        if self.state.turn > properties.MAX_TURN:
+            return True
+
+        for drone in self.state.drones.values():
+            if drone.scans:
+                return False
+
+        fishes = set(fish.fish_id for fish in self.state.fishes.values() if fish.kind != FishKind.ANGLER)
+        if fishes <= self.state.scans[0] and fishes <= self.state.scans[1]:
+            return True
+
+        return False
+
+    def update_drone(self, decisions: list[Decision]) -> None:
+        """
+        Update drone position
+        :param decisions: List of decisions on how to move drones
+        """
+        pass
+
+    @staticmethod
+    def simulate(state: GameState, decisions: list[Decision]) -> int:
+        """
+        Simulate state until end of game
+        :param state: State for simulation
+        :param decisions: List of decisions on how to move drones
+        :return: Player score difference at the end of the game
+        """
+        referee = Referee(copy.deepcopy(state))
+
+        # need to determinate fish speed (because need to kick some fish)
+        for fish in referee.state.fishes.values():
+            if fish.speed is None:
+                fish.speed = Vector()
+
+        # game loop
+        while not referee.is_game_over():
+            referee.remove_to_lost()
+            referee.update_drone(decisions)
+            referee.update_positions()
+            referee.update_speed()
+            referee.do_scan()
+            referee.do_report()
+
+        # in end of the game, save all scanned fish
+        referee.do_report(True)
+
+        return referee.state.score[0] - referee.state.score[1]

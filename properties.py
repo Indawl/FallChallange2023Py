@@ -3,7 +3,7 @@ from typing import Final
 from game_math import Vector
 from game_objects import FishKind
 
-MAX_TURN: Final = 201
+MAX_TURN: Final = 200
 
 MAP_SIZE: Final = 10000
 SURFACE: Final = 500
@@ -47,4 +47,4 @@ REWARDS: Final = {
     FishKind.CRAB: 3
 }
 REWARDS_COLOR: Final = 3
-REWARDS_TYPE: Final = 4
+REWARDS_KIND: Final = 4
